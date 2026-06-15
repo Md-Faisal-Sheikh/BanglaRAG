@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>সেবা সহায়ক — BanglaRAG</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600&family=Noto+Serif+Bengali:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --paper:#F7F5EF; --surface:#FFFFFF; --primary:#0F6E5C; --primary-dark:#0A4E42;
+      --ink:#1C2B27; --muted:#5C6B66; --border:#E5E2D8; --amber:#B7791F;
+    }
+    body { background: var(--paper); color: var(--ink); font-family:'Noto Sans Bengali',system-ui,sans-serif; }
+    .serif { font-family:'Noto Serif Bengali',serif; }
+    .chip { transition: background .15s ease; }
+    .chip:hover { background:#E8F1EE; }
+    @media (prefers-reduced-motion: no-preference) {
+      .fade { animation: fade .25s ease both; }
+      @keyframes fade { from { opacity:0; transform: translateY(4px);} to {opacity:1; transform:none;} }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+    const API = window.BANGLARAG_API_BASE || localStorage.getItem("banglaragApiBase") || "/api";
+
+    function api(path, { method = "GET", body, token } = {}) {
+      const headers = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = "Bearer " + token;
+      return fetch(API + path, { method, headers, body: body ? JSON.stringify(body) : undefined })
+        .then(async (r) => {
+          if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.statusText);
+          return r.status === 204 ? null : r.json();
+        });
+    }
+    // OAuth2 login uses form-encoding, not JSON
+    function login(email, password) {
+      const form = new URLSearchParams({ username: email, password });
+      return fetch(API + "/auth/login", { method: "POST", body: form })
+        .then(async (r) => { if (!r.ok) throw new Error("ভুল ইমেইল বা পাসওয়ার্ড"); return r.json(); });
+    }
+
+    function Auth({ onAuth }) {
+      const [mode, setMode] = useState("login");
+      const [email, setEmail] = useState(""); const [pw, setPw] = useState("");
+      const [err, setErr] = useState(""); const [busy, setBusy] = useState(false);
+
+      async function submit() {
+        setBusy(true); setErr("");
+        try {
+          if (mode === "register") await api("/auth/register", { method: "POST", body: { email, password: pw } });
+          const { access_token } = await login(email, pw);
+          const me = await api("/auth/me", { token: access_token });
+          localStorage.setItem("brag", JSON.stringify({ token: access_token, user: me }));
+          onAuth(access_token, me);
+        } catch (e) { setErr(e.message); } finally { setBusy(false); }
+      }
+
+      return (
+        <div className="min-h-screen flex items-center justify-center px-4">
+          <div className="w-full max-w-sm bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-8 fade">
+            <div className="serif text-2xl mb-1" style={{color:"var(--primary-dark)"}}>সেবা সহায়ক</div>
+            <p className="text-sm mb-6" style={{color:"var(--muted)"}}>সরকারি সেবা সম্পর্কে বাংলায় নির্ভরযোগ্য উত্তর</p>
+            <input className="w-full mb-3 px-3 py-2 rounded-lg border border-[var(--border)] bg-white outline-none focus:border-[var(--primary)]"
+              placeholder="ইমেইল" value={email} onChange={(e)=>setEmail(e.target.value)} />
+            <input type="password" className="w-full mb-4 px-3 py-2 rounded-lg border border-[var(--border)] bg-white outline-none focus:border-[var(--primary)]"
+              placeholder="পাসওয়ার্ড" value={pw} onChange={(e)=>setPw(e.target.value)} />
+            {err && <div className="text-sm mb-3" style={{color:"#B23B2E"}}>{err}</div>}
+            <button disabled={busy} onClick={submit}
+              className="w-full py-2 rounded-lg text-white font-medium disabled:opacity-60"
+              style={{background:"var(--primary)"}}>
+              {busy ? "অপেক্ষা করুন…" : (mode === "login" ? "লগইন" : "নিবন্ধন করুন")}
+            </button>
+            <button onClick={()=>setMode(mode==="login"?"register":"login")}
+              className="w-full mt-3 text-sm" style={{color:"var(--muted)"}}>
+              {mode==="login" ? "নতুন অ্যাকাউন্ট তৈরি করুন" : "ইতিমধ্যে অ্যাকাউন্ট আছে? লগইন"}
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    function Citations({ items }) {
+      const [open, setOpen] = useState(null);
+      if (!items || !items.length) return null;
+      return (
+        <div className="mt-2">
+          <div className="flex flex-wrap gap-1.5">
+            {items.map((c) => (
+              <button key={c.marker} onClick={()=>setOpen(open===c.marker?null:c.marker)}
+                className="chip text-xs px-2 py-0.5 rounded-full border"
+                style={{borderColor:"var(--border)", color:"var(--primary-dark)"}}>
+                সূত্র [{c.marker}] · {c.source}
+              </button>
+            ))}
+          </div>
+          {open!==null && (() => { const c = items.find(x=>x.marker===open); return (
+            <div className="mt-2 text-sm p-3 rounded-lg fade" style={{background:"#F0F4F2", color:"var(--ink)"}}>
+              {c.snippet}…
+            </div>
+          ); })()}
+        </div>
+      );
+    }
+
+    function Chat({ token }) {
+      const [msgs, setMsgs] = useState([]);
+      const [q, setQ] = useState(""); const [busy, setBusy] = useState(false);
+      const [conv, setConv] = useState(null);
+
+      async function send() {
+        if (!q.trim()) return;
+        const question = q; setQ(""); setMsgs((m)=>[...m,{role:"user",content:question}]); setBusy(true);
+        try {
+          const res = await api("/chat", { method:"POST", token, body:{ question, conversation_id: conv } });
+          setConv(res.conversation_id);
+          setMsgs((m)=>[...m,{role:"assistant",content:res.answer,citations:res.citations,grounded:res.grounded}]);
+        } catch (e) {
+          setMsgs((m)=>[...m,{role:"assistant",content:"ত্রুটি: "+e.message,grounded:false}]);
+        } finally { setBusy(false); }
+      }
+
+      return (
+        <div className="max-w-2xl mx-auto px-4 pb-32 pt-6">
+          {msgs.length===0 && (
+            <div className="text-center mt-16" style={{color:"var(--muted)"}}>
+              <div className="serif text-xl mb-2" style={{color:"var(--primary-dark)"}}>কীভাবে সাহায্য করতে পারি?</div>
+              <p className="text-sm">যেমন: “ই-পাসপোর্টের জন্য কোথায় আবেদন করতে হয়?”</p>
+            </div>
+          )}
+          {msgs.map((m,i)=>(
+            <div key={i} className={"mb-4 flex "+(m.role==="user"?"justify-end":"justify-start")}>
+              <div className={"max-w-[85%] px-4 py-3 rounded-2xl fade "+(m.role==="user"?"text-white":"bg-[var(--surface)] border border-[var(--border)]")}
+                style={m.role==="user"?{background:"var(--primary)"}:{}}>
+                <div className="whitespace-pre-wrap leading-relaxed">{m.content}</div>
+                {m.role==="assistant" && (
+                  <>
+                    {m.grounded===false
+                      ? <div className="mt-1.5 text-xs" style={{color:"var(--amber)"}}>● তথ্যসূত্রে উত্তর পাওয়া যায়নি</div>
+                      : <div className="mt-1.5 text-xs" style={{color:"var(--primary)"}}>● সূত্রভিত্তিক উত্তর</div>}
+                    <Citations items={m.citations} />
+                  </>
+                )}
+              </div>
+            </div>
+          ))}
+          <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-[var(--paper)] via-[var(--paper)] to-transparent pt-6 pb-5">
+            <div className="max-w-2xl mx-auto px-4 flex gap-2">
+              <input value={q} onChange={(e)=>setQ(e.target.value)} onKeyDown={(e)=>e.key==="Enter"&&send()}
+                placeholder="আপনার প্রশ্ন লিখুন…" disabled={busy}
+                className="flex-1 px-4 py-3 rounded-xl border border-[var(--border)] bg-white outline-none focus:border-[var(--primary)]" />
+              <button onClick={send} disabled={busy}
+                className="px-5 rounded-xl text-white font-medium disabled:opacity-60" style={{background:"var(--primary)"}}>
+                {busy ? "…" : "পাঠান"}
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function Admin({ token }) {
+      const [docs, setDocs] = useState([]);
+      const [title, setTitle] = useState(""); const [text, setText] = useState("");
+      const [busy, setBusy] = useState(false);
+
+      const load = () => api("/admin/documents", { token }).then(setDocs).catch(()=>{});
+      useEffect(()=>{ load(); }, []);
+
+      async function add() {
+        setBusy(true);
+        try { await api("/admin/documents", { method:"POST", token, body:{ title, text, lang:"bn" } });
+          setTitle(""); setText(""); load(); } finally { setBusy(false); }
+      }
+      return (
+        <div className="max-w-2xl mx-auto px-4 py-6">
+          <h2 className="serif text-xl mb-4" style={{color:"var(--primary-dark)"}}>কর্পাস ব্যবস্থাপনা</h2>
+          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-4 mb-6">
+            <input className="w-full mb-2 px-3 py-2 rounded-lg border border-[var(--border)] outline-none focus:border-[var(--primary)]"
+              placeholder="ডকুমেন্ট শিরোনাম" value={title} onChange={(e)=>setTitle(e.target.value)} />
+            <textarea rows="5" className="w-full mb-2 px-3 py-2 rounded-lg border border-[var(--border)] outline-none focus:border-[var(--primary)]"
+              placeholder="বাংলা টেক্সট পেস্ট করুন…" value={text} onChange={(e)=>setText(e.target.value)} />
+            <button onClick={add} disabled={busy||!title||!text}
+              className="px-4 py-2 rounded-lg text-white font-medium disabled:opacity-60" style={{background:"var(--primary)"}}>
+              {busy?"যুক্ত হচ্ছে…":"ইনডেক্সে যুক্ত করুন"}
+            </button>
+          </div>
+          <div className="space-y-2">
+            {docs.map((d)=>(
+              <div key={d.id} className="flex justify-between items-center bg-white border border-[var(--border)] rounded-lg px-4 py-3">
+                <span>{d.title}</span>
+                <span className="text-xs" style={{color:"var(--muted)"}}>সংস্করণ {d.version} · {d.n_chunks} অংশ</span>
+              </div>
+            ))}
+            {docs.length===0 && <p className="text-sm" style={{color:"var(--muted)"}}>এখনো কোনো ডকুমেন্ট যোগ করা হয়নি।</p>}
+          </div>
+        </div>
+      );
+    }
+
+    function App() {
+      const saved = JSON.parse(localStorage.getItem("brag") || "null");
+      const [token, setToken] = useState(saved?.token || null);
+      const [user, setUser] = useState(saved?.user || null);
+      const [view, setView] = useState("chat");
+
+      function logout() { localStorage.removeItem("brag"); setToken(null); setUser(null); }
+      if (!token) return <Auth onAuth={(t,u)=>{ setToken(t); setUser(u); }} />;
+
+      return (
+        <div className="min-h-screen">
+          <header className="border-b border-[var(--border)] bg-[var(--surface)]/80 backdrop-blur sticky top-0 z-10">
+            <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
+              <div className="serif font-bold" style={{color:"var(--primary-dark)"}}>সেবা সহায়ক</div>
+              <div className="flex items-center gap-3 text-sm">
+                {user?.is_admin && (
+                  <button onClick={()=>setView(view==="chat"?"admin":"chat")} style={{color:"var(--primary)"}}>
+                    {view==="chat" ? "কর্পাস" : "চ্যাট"}
+                  </button>
+                )}
+                <span style={{color:"var(--muted)"}}>{user?.email}</span>
+                <button onClick={logout} style={{color:"var(--muted)"}}>লগআউট</button>
+              </div>
+            </div>
+          </header>
+          {view==="chat" ? <Chat token={token} /> : <Admin token={token} />}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>

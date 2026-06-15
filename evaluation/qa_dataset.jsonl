@@ -1,0 +1,10 @@
+{"id": "q1", "question": "ই-পাসপোর্টের জন্য কোথায় আবেদন করতে হয়?", "gold_answer": "epassport.gov.bd ওয়েবসাইটে অনলাইনে আবেদন করতে হয়।", "gold_doc_ids": ["passport_services_bn"], "answerable": true}
+{"id": "q2", "question": "১৮ বছরের কম বয়সীদের পাসপোর্ট আবেদনে কী কী কাগজপত্র লাগে?", "gold_answer": "জন্ম নিবন্ধন সনদ এবং পিতা-মাতার জাতীয় পরিচয়পত্র প্রয়োজন হয়।", "gold_doc_ids": ["passport_services_bn"], "answerable": true}
+{"id": "q3", "question": "সাধারণ ক্যাটাগরিতে পাসপোর্ট পেতে কত দিন লাগে?", "gold_answer": "আনুমানিক ১৫ কর্মদিবস সময় লাগে।", "gold_doc_ids": ["passport_services_bn"], "answerable": true}
+{"id": "q4", "question": "পাসপোর্টের বায়োমেট্রিক তথ্য কোথায় দিতে হয়?", "gold_answer": "সংশ্লিষ্ট পাসপোর্ট অফিসে সশরীরে গিয়ে আঙুলের ছাপ, ছবি ও আইরিস স্ক্যান দিতে হয়।", "gold_doc_ids": ["passport_services_bn"], "answerable": true}
+{"id": "q5", "question": "জাতীয় পরিচয়পত্রের তথ্য সংশোধন কীভাবে করা যায়?", "gold_answer": "services.nidw.gov.bd ওয়েবসাইটে অনলাইনে সংশোধন আবেদন জমা দিয়ে করা যায়।", "gold_doc_ids": ["nid_services_bn"], "answerable": true}
+{"id": "q6", "question": "এনআইডি হারিয়ে গেলে প্রথমে কী করতে হয়?", "gold_answer": "নিকটস্থ থানায় একটি সাধারণ ডায়েরি (জিডি) করতে হয়।", "gold_doc_ids": ["nid_services_bn"], "answerable": true}
+{"id": "q7", "question": "জন্মতারিখ সংশোধনের জন্য কী ধরনের প্রমাণ লাগে?", "gold_answer": "সাধারণত শিক্ষাগত সনদ বা জন্ম নিবন্ধন সনদ প্রমাণ হিসেবে প্রয়োজন হয়।", "gold_doc_ids": ["nid_services_bn"], "answerable": true}
+{"id": "q8", "question": "পাসপোর্ট প্রস্তুত হলে কীভাবে জানানো হয়?", "gold_answer": "এসএমএসের মাধ্যমে জানিয়ে দেওয়া হয়।", "gold_doc_ids": ["passport_services_bn"], "answerable": true}
+{"id": "q9", "question": "ড্রাইভিং লাইসেন্স করতে কত টাকা লাগে?", "gold_answer": "প্রদত্ত তথ্যসূত্রে এই প্রশ্নের উত্তর নেই।", "gold_doc_ids": [], "answerable": false}
+{"id": "q10", "question": "বিদেশে যাওয়ার ভিসা আবেদন কোথায় করতে হয়?", "gold_answer": "প্রদত্ত তথ্যসূত্রে এই প্রশ্নের উত্তর নেই।", "gold_doc_ids": [], "answerable": false}

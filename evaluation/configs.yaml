@@ -1,0 +1,63 @@
+# Experiment matrix for the faithfulness study.
+# Each entry builds an independent index + pipeline and is scored on the QA set.
+# Vary one axis at a time to attribute effects cleanly.
+
+judge:
+  provider: openai          # provider used for LLM-as-judge (faithfulness/correctness)
+  model: gpt-4o-mini
+
+generation:
+  provider: openai          # provider used to actually answer questions
+  model: gpt-4o-mini
+
+embedding:
+  provider: sentence_transformers
+  model: BAAI/bge-m3
+
+metrics_k: [1, 3, 5]        # k values for hit-rate / recall
+
+experiments:
+  - name: native_recursive_norerank
+    retrieval_lang: bn
+    chunker: recursive
+    chunk_size: 512
+    chunk_overlap: 64
+    use_reranker: false
+    top_k: 5
+    rerank_k: 5
+
+  - name: native_recursive_rerank
+    retrieval_lang: bn
+    chunker: recursive
+    chunk_size: 512
+    chunk_overlap: 64
+    use_reranker: true
+    top_k: 20
+    rerank_k: 5
+
+  - name: native_sentence_rerank
+    retrieval_lang: bn
+    chunker: sentence_bn
+    chunk_size: 512
+    chunk_overlap: 64
+    use_reranker: true
+    top_k: 20
+    rerank_k: 5
+
+  - name: native_fixed_rerank
+    retrieval_lang: bn
+    chunker: fixed
+    chunk_size: 512
+    chunk_overlap: 64
+    use_reranker: true
+    top_k: 20
+    rerank_k: 5
+
+  - name: pivot_recursive_rerank
+    retrieval_lang: en        # English-pivot: docs + query translated to English
+    chunker: recursive
+    chunk_size: 512
+    chunk_overlap: 64
+    use_reranker: true
+    top_k: 20
+    rerank_k: 5
