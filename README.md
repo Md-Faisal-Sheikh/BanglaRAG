@@ -1,3 +1,12 @@
+---
+title: BanglaRAG
+emoji: 🏆
+colorFrom: green
+colorTo: purple
+sdk: docker
+pinned: false
+---
+
 # সেবা সহায়ক — BanglaRAG
 
 A Bangla-first, source-grounded RAG assistant for a public-service domain (government
