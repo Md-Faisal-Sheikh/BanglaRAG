@@ -1,0 +1,13 @@
+.git
+.github
+.venv
+venv
+env
+__pycache__
+*.pyc
+*.db
+chroma_db
+evaluation/results.csv
+.pytest_cache
+node_modules
+gh-pages-job.log

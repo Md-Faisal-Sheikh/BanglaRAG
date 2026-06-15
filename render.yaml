@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: banglarag
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt && python ingest.py --corpus data/corpus --reset
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: LLM_PROVIDER
+        value: mock
+      - key: USE_RERANKER
+        value: false
+      - key: CORS_ORIGINS
+        value: "*"
+      - key: JWT_SECRET
+        generateValue: true
