@@ -14,6 +14,8 @@ needs more memory than many small free web-service tiers provide.
    - the matching API key such as `OPENAI_API_KEY`
 5. Keep the default demo values if you want it to run without paid keys:
    - `EMBEDDING_PROVIDER=hash`
+   - `VECTOR_STORE=memory`
+   - `AUTO_INGEST_CORPUS=data/corpus`
    - `LLM_PROVIDER=mock`
    - `USE_RERANKER=false`
 

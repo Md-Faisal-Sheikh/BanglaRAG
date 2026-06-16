@@ -6,6 +6,7 @@ so models aren't reloaded on every request.
 from __future__ import annotations
 
 from functools import lru_cache
+import os
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -19,6 +20,7 @@ from app.core.reranker import get_reranker
 from app.core.vectorstore import get_vector_store
 from app.db.database import get_db
 from app.db.models import User
+from app.services.ingestion import RawDoc, ingest_documents
 from app.services.auth import decode_token
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login", auto_error=False)
@@ -27,9 +29,21 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login", auto_error=False
 @lru_cache
 def get_pipeline() -> RAGPipeline:
     s = get_settings()
+    embedder = get_embedding_provider(s)
+    store = get_vector_store(s)
+    if s.auto_ingest_corpus and store.count() == 0 and os.path.isdir(s.auto_ingest_corpus):
+        docs = []
+        for fn in sorted(os.listdir(s.auto_ingest_corpus)):
+            if fn.endswith(".txt"):
+                path = os.path.join(s.auto_ingest_corpus, fn)
+                stem = os.path.splitext(fn)[0]
+                with open(path, encoding="utf-8") as f:
+                    docs.append(RawDoc(source=stem, title=stem, text=f.read(), lang="bn"))
+        ingest_documents(docs, embedder, store, s)
+
     return RAGPipeline(
-        embedder=get_embedding_provider(s),
-        store=get_vector_store(s),
+        embedder=embedder,
+        store=store,
         reranker=get_reranker(s),
         llm=get_llm(s),
         config=RAGConfig(

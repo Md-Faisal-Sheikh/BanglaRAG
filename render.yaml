@@ -12,6 +12,10 @@ services:
         value: mock
       - key: EMBEDDING_PROVIDER
         value: hash
+      - key: VECTOR_STORE
+        value: memory
+      - key: AUTO_INGEST_CORPUS
+        value: data/corpus
       - key: USE_RERANKER
         value: false
       - key: CORS_ORIGINS

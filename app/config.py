@@ -31,10 +31,11 @@ class Settings(BaseSettings):
     openai_embedding_model: str = "text-embedding-3-large"
 
     # --- Vector store ---
-    vector_store: str = "chroma"                  # "chroma" (local) | "qdrant" (prod)
+    vector_store: str = "chroma"                  # "chroma" (local) | "memory" (demo) | "qdrant" (prod)
     chroma_dir: str = "./chroma_db"
     qdrant_url: str = "http://localhost:6333"
     collection_name: str = "banglarag"
+    auto_ingest_corpus: str = ""
 
     # --- Reranker ---
     use_reranker: bool = True

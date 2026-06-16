@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+import math
 
 from app.config import Settings
 
@@ -87,8 +88,53 @@ class ChromaVectorStore(VectorStore):
         return self.collection.count()
 
 
+class MemoryVectorStore(VectorStore):
+    """Ephemeral vector store for hosted demos and tests."""
+
+    def __init__(self):
+        self._rows: list[tuple[str, list[float], str, dict]] = []
+
+    def add(self, ids, embeddings, documents, metadatas) -> None:
+        for row in zip(ids, embeddings, documents, metadatas):
+            self._rows.append(row)
+
+    @staticmethod
+    def _score(a: list[float], b: list[float]) -> float:
+        dot = sum(x * y for x, y in zip(a, b))
+        an = math.sqrt(sum(x * x for x in a))
+        bn = math.sqrt(sum(y * y for y in b))
+        if not an or not bn:
+            return 0.0
+        return dot / (an * bn)
+
+    def query(self, query_embedding: list[float], k: int) -> list[RetrievedChunk]:
+        ranked = sorted(
+            self._rows,
+            key=lambda row: self._score(query_embedding, row[1]),
+            reverse=True,
+        )[:k]
+        return [
+            RetrievedChunk(
+                id=cid,
+                text=doc,
+                source=meta.get("source", "unknown"),
+                score=self._score(query_embedding, emb),
+                metadata=meta,
+            )
+            for cid, emb, doc, meta in ranked
+        ]
+
+    def reset(self) -> None:
+        self._rows.clear()
+
+    def count(self) -> int:
+        return len(self._rows)
+
+
 def get_vector_store(settings: Settings, collection_name: str | None = None) -> VectorStore:
     name = collection_name or settings.collection_name
+    if settings.vector_store == "memory":
+        return MemoryVectorStore()
     if settings.vector_store == "qdrant":
         raise NotImplementedError(
             "Qdrant adapter is a stub. See docs/ARCHITECTURE.md for the upgrade path."

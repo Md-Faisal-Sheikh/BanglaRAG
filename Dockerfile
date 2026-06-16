@@ -4,6 +4,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PORT=7860 \
     EMBEDDING_PROVIDER=hash \
+    VECTOR_STORE=memory \
+    AUTO_INGEST_CORPUS=data/corpus \
     LLM_PROVIDER=mock \
     USE_RERANKER=false \
     CORS_ORIGINS=* \
@@ -22,7 +24,6 @@ RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt
 
 COPY . .
-RUN python ingest.py --corpus data/corpus --reset
 
 EXPOSE 7860
 
