@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./banglarag.db"
 
     # --- Embeddings ---
-    # provider: "sentence_transformers" (local, free) | "openai"
+    # provider: "sentence_transformers" (local, free) | "openai" | "hash" (light demo)
     embedding_provider: str = "sentence_transformers"
     embedding_model: str = "BAAI/bge-m3"          # strong multilingual, supports Bangla
     openai_embedding_model: str = "text-embedding-3-large"

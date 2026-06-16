@@ -13,6 +13,7 @@ needs more memory than many small free web-service tiers provide.
    - `LLM_PROVIDER=openai`, `gemini`, or `groq`
    - the matching API key such as `OPENAI_API_KEY`
 5. Keep the default demo values if you want it to run without paid keys:
+   - `EMBEDDING_PROVIDER=hash`
    - `LLM_PROVIDER=mock`
    - `USE_RERANKER=false`
 
