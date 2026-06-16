@@ -2,9 +2,10 @@
 
 ## Recommended free full-stack demo: Hugging Face Spaces
 
-BanglaRAG includes a `Dockerfile` for a Hugging Face Docker Space. This is the best
-free fit for the full app because the project uses `sentence-transformers`, which
-needs more memory than many small free web-service tiers provide.
+BanglaRAG includes a `Dockerfile` for a Hugging Face Docker Space. The hosted demo
+uses `requirements-space.txt`, `EMBEDDING_PROVIDER=hash`, `VECTOR_STORE=memory`,
+and `LLM_PROVIDER=mock` so it can build on the free CPU tier without downloading
+large ML models.
 
 1. Create a new Hugging Face Space.
 2. Select `Docker` as the SDK.
