@@ -26,10 +26,32 @@
   </style>
 </head>
 <body>
-  <div id="root"></div>
+  <div id="root">
+    <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;color:var(--muted)">
+      Loading BanglaRAG...
+    </div>
+  </div>
   <script type="text/babel">
     const { useState, useEffect } = React;
-    const API = window.BANGLARAG_API_BASE || localStorage.getItem("banglaragApiBase") || "/api";
+
+    function safeStorageGet(key) {
+      try { return window.localStorage?.getItem(key) || null; }
+      catch (_) { return null; }
+    }
+    function safeStorageSet(key, value) {
+      try { window.localStorage?.setItem(key, value); }
+      catch (_) {}
+    }
+    function safeStorageRemove(key) {
+      try { window.localStorage?.removeItem(key); }
+      catch (_) {}
+    }
+    function safeJsonParse(value) {
+      try { return value ? JSON.parse(value) : null; }
+      catch (_) { return null; }
+    }
+
+    const API = window.BANGLARAG_API_BASE || safeStorageGet("banglaragApiBase") || "/api";
 
     function api(path, { method = "GET", body, token } = {}) {
       const headers = { "Content-Type": "application/json" };
@@ -58,7 +80,7 @@
           if (mode === "register") await api("/auth/register", { method: "POST", body: { email, password: pw } });
           const { access_token } = await login(email, pw);
           const me = await api("/auth/me", { token: access_token });
-          localStorage.setItem("brag", JSON.stringify({ token: access_token, user: me }));
+          safeStorageSet("brag", JSON.stringify({ token: access_token, user: me }));
           onAuth(access_token, me);
         } catch (e) { setErr(e.message); } finally { setBusy(false); }
       }
@@ -206,12 +228,12 @@
     }
 
     function App() {
-      const saved = JSON.parse(localStorage.getItem("brag") || "null");
+      const saved = safeJsonParse(safeStorageGet("brag"));
       const [token, setToken] = useState(saved?.token || null);
       const [user, setUser] = useState(saved?.user || null);
       const [view, setView] = useState("chat");
 
-      function logout() { localStorage.removeItem("brag"); setToken(null); setUser(null); }
+      function logout() { safeStorageRemove("brag"); setToken(null); setUser(null); }
       if (!token) return <Auth onAuth={(t,u)=>{ setToken(t); setUser(u); }} />;
 
       return (
