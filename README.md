@@ -173,29 +173,6 @@ pivot_recursive_rerank    | ...   | ...   | ...   | ...          | ...          
 
 Change one axis at a time so each effect is attributable.
 
----
-
-## From results to paper
-
-A clean, defensible write-up structure:
-
-1. **Problem** — RAG faithfulness for a low-resource language (Bangla) in a real,
-   high-stakes domain (public services), where hallucination has real cost.
-2. **System** — the architecture here (cite it as the experimental platform).
-3. **Benchmark** — your curated Bangla QA set: how you built it, the answerable/
-   unanswerable split, document-level gold labels. *(The 10 items here are a seed —
-   grow to 100–300 for a credible paper.)*
-4. **Method** — the configuration grid above and the metric definitions.
-5. **Findings** — "which configuration is most faithful for Bangla domain QA": e.g.
-   native vs. pivot, the chunking effect, the reranking effect, and the
-   faithfulness↔abstention trade-off.
-6. **Release** — corpus + QA set + harness. The artifact *is* a contribution.
-
-**Venues:** low-resource / multilingual NLP workshops (e.g. workshops co-located with
-*ACL / EMNLP), applied-AI and regional NLP venues.
-
----
-
 ## Honest limitations (and how to extend)
 
 - **Sample corpus is illustrative.** The two `.txt` files contain *plausible but
