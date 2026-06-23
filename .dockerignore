@@ -10,4 +10,6 @@ chroma_db
 evaluation/results.csv
 .pytest_cache
 node_modules
+web
+.claude
 gh-pages-job.log

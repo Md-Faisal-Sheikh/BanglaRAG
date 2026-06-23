@@ -52,7 +52,8 @@ banglarag/
 │   ├── configs.yaml        #   the experiment matrix
 │   └── run_eval.py         #   runs every config, writes results.csv
 ├── data/corpus/            # sample Bangla gov-service docs (replace these)
-├── frontend/index.html     # single-file React client (Bangla-first)
+├── web/                    # React + shadcn/ui frontend source (Vite) — see web/README.md
+├── frontend/               # built UI bundle (served by API / Space / Pages)
 ├── tests/                  # pytest unit tests
 ├── docs/                   # ARCHITECTURE.md, SRS_outline.md
 ├── ingest.py               # CLI: load corpus into the live index
@@ -73,7 +74,7 @@ banglarag/
 | LLM | **swappable** (OpenAI/Gemini/Groq/Mock) | the research needs provider independence; Mock runs offline |
 | Relational DB | **SQLAlchemy + SQLite** | users, versioned corpus metadata, chat history with no setup; Postgres swap |
 | Auth | **JWT + bcrypt** | real auth surface for the SWE deliverable |
-| Frontend | **React (CDN) + Tailwind** | single-file, Bangla-typeset chat UI with citation chips |
+| Frontend | **React + TypeScript + shadcn/ui** (Vite) | Bangla-typeset chat + corpus UI, light/dark, citation chips; built into `frontend/` |
 
 The recurring design decision is that **every model/store sits behind an interface
 with a config-keyed factory**. That's good engineering (dependency inversion,

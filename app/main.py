@@ -5,7 +5,6 @@ import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.api import admin, auth, chat
@@ -38,11 +37,10 @@ def health():
     return {"status": "ok"}
 
 
-# --- serve the frontend (single-file client) ---
+# --- serve the built single-page frontend (Vite/React build output) ---
+# The API routers and /health are registered above, so they take precedence over this
+# catch-all mount. html=True serves index.html at "/" and the hashed files under
+# /assets/*. The bundle is built from web/ into this directory (see web/README.md).
 _FRONTEND = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend")
 if os.path.isdir(_FRONTEND):
-    @app.get("/")
-    def index():
-        return FileResponse(os.path.join(_FRONTEND, "index.html"))
-
-    app.mount("/static", StaticFiles(directory=_FRONTEND), name="static")
+    app.mount("/", StaticFiles(directory=_FRONTEND, html=True), name="frontend")
