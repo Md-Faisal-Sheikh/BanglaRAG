@@ -4,260 +4,773 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>সেবা সহায়ক — BanglaRAG</title>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600&family=Noto+Serif+Bengali:wght@600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --paper:#F7F5EF; --surface:#FFFFFF; --primary:#0F6E5C; --primary-dark:#0A4E42;
-      --ink:#1C2B27; --muted:#5C6B66; --border:#E5E2D8; --amber:#B7791F;
+      --paper: #f7f5ef;
+      --surface: #ffffff;
+      --primary: #0f6e5c;
+      --primary-dark: #0a4e42;
+      --ink: #1c2b27;
+      --muted: #5c6b66;
+      --border: #e5e2d8;
+      --amber: #b7791f;
+      --danger: #b23b2e;
+      color-scheme: light;
     }
-    body { background: var(--paper); color: var(--ink); font-family:'Noto Sans Bengali',system-ui,sans-serif; }
-    .serif { font-family:'Noto Serif Bengali',serif; }
-    .chip { transition: background .15s ease; }
-    .chip:hover { background:#E8F1EE; }
-    @media (prefers-reduced-motion: no-preference) {
-      .fade { animation: fade .25s ease both; }
-      @keyframes fade { from { opacity:0; transform: translateY(4px);} to {opacity:1; transform:none;} }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "Noto Sans Bengali", "Vrinda", "Nirmala UI", system-ui, sans-serif;
+    }
+
+    button,
+    input,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    .serif {
+      font-family: "Noto Serif Bengali", "Nirmala UI", Georgia, serif;
+    }
+
+    .center-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .auth-card {
+      width: min(100%, 390px);
+      padding: 32px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--surface);
+      box-shadow: 0 18px 50px rgba(28, 43, 39, 0.08);
+    }
+
+    .brand-title {
+      margin: 0 0 4px;
+      color: var(--primary-dark);
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .auth-copy {
+      margin: 0 0 24px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .field {
+      width: 100%;
+      min-height: 44px;
+      margin-bottom: 12px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: white;
+      color: var(--ink);
+      outline: none;
+    }
+
+    .field:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(15, 110, 92, 0.12);
+    }
+
+    textarea.field {
+      min-height: 132px;
+      resize: vertical;
+    }
+
+    .primary-button,
+    .send-button {
+      border: 0;
+      background: var(--primary);
+      color: white;
+      font-weight: 600;
+    }
+
+    .primary-button {
+      width: 100%;
+      min-height: 44px;
+      border-radius: 10px;
+    }
+
+    .text-button {
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+    }
+
+    .switch-button {
+      width: 100%;
+      margin-top: 14px;
+      font-size: 14px;
+    }
+
+    .error {
+      margin: 0 0 12px;
+      color: var(--danger);
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .shell {
+      min-height: 100vh;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(12px);
+    }
+
+    .topbar-inner,
+    .chat,
+    .admin {
+      width: min(100%, 704px);
+      margin: 0 auto;
+      padding-inline: 16px;
+    }
+
+    .topbar-inner {
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .topbar-title {
+      color: var(--primary-dark);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+      min-width: 0;
+      font-size: 14px;
+    }
+
+    .email {
+      max-width: 220px;
+      overflow: hidden;
+      color: var(--muted);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .chat {
+      padding-top: 24px;
+      padding-bottom: 126px;
+    }
+
+    .empty {
+      margin-top: 64px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .empty-title {
+      margin: 0 0 8px;
+      color: var(--primary-dark);
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .message-row {
+      display: flex;
+      margin-bottom: 16px;
+    }
+
+    .message-row.user {
+      justify-content: flex-end;
+    }
+
+    .bubble {
+      max-width: 85%;
+      padding: 12px 16px;
+      border-radius: 18px;
+      line-height: 1.65;
+      white-space: pre-wrap;
+      animation: fade 0.2s ease both;
+    }
+
+    .bubble.user {
+      background: var(--primary);
+      color: white;
+    }
+
+    .bubble.assistant {
+      border: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    .grounded {
+      margin-top: 6px;
+      color: var(--primary);
+      font-size: 12px;
+    }
+
+    .ungrounded {
+      margin-top: 6px;
+      color: var(--amber);
+      font-size: 12px;
+    }
+
+    .citation-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .citation {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: transparent;
+      color: var(--primary-dark);
+      padding: 3px 8px;
+      font-size: 12px;
+    }
+
+    .citation:hover {
+      background: #e8f1ee;
+    }
+
+    .snippet {
+      margin-top: 8px;
+      padding: 12px;
+      border-radius: 10px;
+      background: #f0f4f2;
+      color: var(--ink);
+      font-size: 14px;
+      white-space: normal;
+    }
+
+    .composer-wrap {
+      position: fixed;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      padding: 28px 0 20px;
+      background: linear-gradient(to top, var(--paper) 0%, var(--paper) 72%, rgba(247, 245, 239, 0));
+    }
+
+    .composer {
+      width: min(100%, 704px);
+      display: flex;
+      gap: 8px;
+      margin: 0 auto;
+      padding-inline: 16px;
+    }
+
+    .composer .field {
+      flex: 1;
+      margin: 0;
+      border-radius: 14px;
+      padding: 12px 14px;
+    }
+
+    .send-button {
+      min-width: 96px;
+      border-radius: 14px;
+      padding: 0 18px;
+    }
+
+    .admin {
+      padding-top: 24px;
+      padding-bottom: 40px;
+    }
+
+    .section-title {
+      margin: 0 0 16px;
+      color: var(--primary-dark);
+      font-size: 22px;
+    }
+
+    .admin-form {
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--surface);
+    }
+
+    .admin-form .primary-button {
+      width: auto;
+      padding-inline: 16px;
+    }
+
+    .docs {
+      display: grid;
+      gap: 8px;
+      margin-top: 24px;
+    }
+
+    .doc-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: white;
+    }
+
+    .doc-meta {
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .loading {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+      color: var(--muted);
+    }
+
+    @keyframes fade {
+      from {
+        opacity: 0;
+        transform: translateY(4px);
+      }
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .auth-card {
+        padding: 24px;
+      }
+
+      .topbar-inner {
+        align-items: flex-start;
+        height: auto;
+        min-height: 56px;
+        padding-block: 12px;
+      }
+
+      .topbar-actions {
+        flex-wrap: wrap;
+      }
+
+      .email {
+        display: none;
+      }
+
+      .bubble {
+        max-width: 92%;
+      }
+
+      .send-button {
+        min-width: 76px;
+        padding-inline: 12px;
+      }
+
+      .doc-row {
+        align-items: flex-start;
+        flex-direction: column;
+      }
     }
   </style>
 </head>
 <body>
-  <div id="root">
-    <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;color:var(--muted)">
-      Loading BanglaRAG...
-    </div>
-  </div>
-  <script type="text/babel">
-    const { useState, useEffect } = React;
+  <div id="root" class="loading">Loading BanglaRAG...</div>
 
-    function safeStorageGet(key) {
-      try { return window.localStorage?.getItem(key) || null; }
-      catch (_) { return null; }
-    }
-    function safeStorageSet(key, value) {
-      try { window.localStorage?.setItem(key, value); }
-      catch (_) {}
-    }
-    function safeStorageRemove(key) {
-      try { window.localStorage?.removeItem(key); }
-      catch (_) {}
-    }
-    function safeJsonParse(value) {
-      try { return value ? JSON.parse(value) : null; }
-      catch (_) { return null; }
-    }
+  <script>
+    (() => {
+      const root = document.getElementById("root");
+      const API = window.BANGLARAG_API_BASE || safeStorageGet("banglaragApiBase") || "/api";
+      let state = {
+        mode: "login",
+        token: null,
+        user: null,
+        view: "chat",
+        messages: [],
+        conversationId: null,
+        busy: false,
+        error: "",
+        docs: [],
+        openCitation: null,
+      };
 
-    const API = window.BANGLARAG_API_BASE || safeStorageGet("banglaragApiBase") || "/api";
+      function safeStorageGet(key) {
+        try {
+          return window.localStorage ? window.localStorage.getItem(key) : null;
+        } catch (_) {
+          return null;
+        }
+      }
 
-    function api(path, { method = "GET", body, token } = {}) {
-      const headers = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = "Bearer " + token;
-      return fetch(API + path, { method, headers, body: body ? JSON.stringify(body) : undefined })
-        .then(async (r) => {
-          if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.statusText);
-          return r.status === 204 ? null : r.json();
+      function safeStorageSet(key, value) {
+        try {
+          if (window.localStorage) window.localStorage.setItem(key, value);
+        } catch (_) {}
+      }
+
+      function safeStorageRemove(key) {
+        try {
+          if (window.localStorage) window.localStorage.removeItem(key);
+        } catch (_) {}
+      }
+
+      function safeJsonParse(value) {
+        try {
+          return value ? JSON.parse(value) : null;
+        } catch (_) {
+          return null;
+        }
+      }
+
+      function escapeHtml(value) {
+        return String(value ?? "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      function api(path, { method = "GET", body, token } = {}) {
+        const headers = { "Content-Type": "application/json" };
+        if (token) headers.Authorization = "Bearer " + token;
+        return fetch(API + path, {
+          method,
+          headers,
+          body: body ? JSON.stringify(body) : undefined,
+        }).then(async (response) => {
+          if (!response.ok) {
+            const data = await response.json().catch(() => ({}));
+            throw new Error(data.detail || response.statusText || "Request failed");
+          }
+          return response.status === 204 ? null : response.json();
         });
-    }
-    // OAuth2 login uses form-encoding, not JSON
-    function login(email, password) {
-      const form = new URLSearchParams({ username: email, password });
-      return fetch(API + "/auth/login", { method: "POST", body: form })
-        .then(async (r) => { if (!r.ok) throw new Error("ভুল ইমেইল বা পাসওয়ার্ড"); return r.json(); });
-    }
+      }
 
-    function Auth({ onAuth }) {
-      const [mode, setMode] = useState("login");
-      const [email, setEmail] = useState(""); const [pw, setPw] = useState("");
-      const [err, setErr] = useState(""); const [busy, setBusy] = useState(false);
+      function login(email, password) {
+        const form = new URLSearchParams({ username: email, password });
+        return fetch(API + "/auth/login", { method: "POST", body: form }).then(async (response) => {
+          if (!response.ok) throw new Error("ভুল ইমেইল বা পাসওয়ার্ড");
+          return response.json();
+        });
+      }
 
-      async function submit() {
-        setBusy(true); setErr("");
+      function setState(patch) {
+        state = { ...state, ...patch };
+        render();
+      }
+
+      function button(text, attrs = "") {
+        return `<button ${attrs}>${escapeHtml(text)}</button>`;
+      }
+
+      function renderAuth() {
+        const actionLabel = state.busy
+          ? "অপেক্ষা করুন..."
+          : state.mode === "login"
+            ? "লগইন"
+            : "নিবন্ধন করুন";
+        const switchLabel = state.mode === "login"
+          ? "নতুন অ্যাকাউন্ট তৈরি করুন"
+          : "ইতিমধ্যে অ্যাকাউন্ট আছে? লগইন";
+
+        root.className = "";
+        root.innerHTML = `
+          <main class="center-page">
+            <section class="auth-card">
+              <h1 class="serif brand-title">সেবা সহায়ক</h1>
+              <p class="auth-copy">সরকারি সেবা সম্পর্কে বাংলায় নির্ভরযোগ্য উত্তর</p>
+              <input id="email" class="field" type="email" autocomplete="email" placeholder="ইমেইল" />
+              <input id="password" class="field" type="password" autocomplete="current-password" placeholder="পাসওয়ার্ড" />
+              ${state.error ? `<p class="error">${escapeHtml(state.error)}</p>` : ""}
+              ${button(actionLabel, `id="auth-submit" class="primary-button" ${state.busy ? "disabled" : ""}`)}
+              ${button(switchLabel, `id="auth-switch" class="text-button switch-button" ${state.busy ? "disabled" : ""}`)}
+            </section>
+          </main>
+        `;
+
+        const email = root.querySelector("#email");
+        const password = root.querySelector("#password");
+        const submit = root.querySelector("#auth-submit");
+        const switcher = root.querySelector("#auth-switch");
+
+        submit.addEventListener("click", () => submitAuth(email.value.trim(), password.value));
+        password.addEventListener("keydown", (event) => {
+          if (event.key === "Enter") submitAuth(email.value.trim(), password.value);
+        });
+        switcher.addEventListener("click", () => {
+          setState({ mode: state.mode === "login" ? "register" : "login", error: "" });
+        });
+      }
+
+      async function submitAuth(email, password) {
+        if (!email || !password || state.busy) return;
+        setState({ busy: true, error: "" });
         try {
-          if (mode === "register") await api("/auth/register", { method: "POST", body: { email, password: pw } });
-          const { access_token } = await login(email, pw);
-          const me = await api("/auth/me", { token: access_token });
-          safeStorageSet("brag", JSON.stringify({ token: access_token, user: me }));
-          onAuth(access_token, me);
-        } catch (e) { setErr(e.message); } finally { setBusy(false); }
+          if (state.mode === "register") {
+            await api("/auth/register", { method: "POST", body: { email, password } });
+          }
+          const { access_token: token } = await login(email, password);
+          const user = await api("/auth/me", { token });
+          safeStorageSet("brag", JSON.stringify({ token, user }));
+          setState({ token, user, busy: false, error: "", view: "chat" });
+        } catch (error) {
+          setState({ busy: false, error: error.message });
+        }
       }
 
-      return (
-        <div className="min-h-screen flex items-center justify-center px-4">
-          <div className="w-full max-w-sm bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-8 fade">
-            <div className="serif text-2xl mb-1" style={{color:"var(--primary-dark)"}}>সেবা সহায়ক</div>
-            <p className="text-sm mb-6" style={{color:"var(--muted)"}}>সরকারি সেবা সম্পর্কে বাংলায় নির্ভরযোগ্য উত্তর</p>
-            <input className="w-full mb-3 px-3 py-2 rounded-lg border border-[var(--border)] bg-white outline-none focus:border-[var(--primary)]"
-              placeholder="ইমেইল" value={email} onChange={(e)=>setEmail(e.target.value)} />
-            <input type="password" className="w-full mb-4 px-3 py-2 rounded-lg border border-[var(--border)] bg-white outline-none focus:border-[var(--primary)]"
-              placeholder="পাসওয়ার্ড" value={pw} onChange={(e)=>setPw(e.target.value)} />
-            {err && <div className="text-sm mb-3" style={{color:"#B23B2E"}}>{err}</div>}
-            <button disabled={busy} onClick={submit}
-              className="w-full py-2 rounded-lg text-white font-medium disabled:opacity-60"
-              style={{background:"var(--primary)"}}>
-              {busy ? "অপেক্ষা করুন…" : (mode === "login" ? "লগইন" : "নিবন্ধন করুন")}
-            </button>
-            <button onClick={()=>setMode(mode==="login"?"register":"login")}
-              className="w-full mt-3 text-sm" style={{color:"var(--muted)"}}>
-              {mode==="login" ? "নতুন অ্যাকাউন্ট তৈরি করুন" : "ইতিমধ্যে অ্যাকাউন্ট আছে? লগইন"}
-            </button>
-          </div>
-        </div>
-      );
-    }
+      function renderShell(content) {
+        const adminButton = state.user && state.user.is_admin
+          ? button(state.view === "chat" ? "কর্পাস" : "চ্যাট", `id="toggle-view" class="text-button" style="color:var(--primary)"`)
+          : "";
 
-    function Citations({ items }) {
-      const [open, setOpen] = useState(null);
-      if (!items || !items.length) return null;
-      return (
-        <div className="mt-2">
-          <div className="flex flex-wrap gap-1.5">
-            {items.map((c) => (
-              <button key={c.marker} onClick={()=>setOpen(open===c.marker?null:c.marker)}
-                className="chip text-xs px-2 py-0.5 rounded-full border"
-                style={{borderColor:"var(--border)", color:"var(--primary-dark)"}}>
-                সূত্র [{c.marker}] · {c.source}
-              </button>
-            ))}
+        root.className = "";
+        root.innerHTML = `
+          <div class="shell">
+            <header class="topbar">
+              <div class="topbar-inner">
+                <div class="serif topbar-title">সেবা সহায়ক</div>
+                <nav class="topbar-actions">
+                  ${adminButton}
+                  <span class="email">${escapeHtml(state.user ? state.user.email : "")}</span>
+                  ${button("লগআউট", `id="logout" class="text-button"`)}
+                </nav>
+              </div>
+            </header>
+            ${content}
           </div>
-          {open!==null && (() => { const c = items.find(x=>x.marker===open); return (
-            <div className="mt-2 text-sm p-3 rounded-lg fade" style={{background:"#F0F4F2", color:"var(--ink)"}}>
-              {c.snippet}…
+        `;
+
+        const toggle = root.querySelector("#toggle-view");
+        const logout = root.querySelector("#logout");
+        if (toggle) {
+          toggle.addEventListener("click", () => {
+            const nextView = state.view === "chat" ? "admin" : "chat";
+            setState({ view: nextView });
+            if (nextView === "admin") loadDocs();
+          });
+        }
+        logout.addEventListener("click", () => {
+          safeStorageRemove("brag");
+          setState({ token: null, user: null, view: "chat", messages: [], conversationId: null });
+        });
+      }
+
+      function renderChat() {
+        const empty = state.messages.length
+          ? ""
+          : `
+            <section class="empty">
+              <h2 class="serif empty-title">কীভাবে সাহায্য করতে পারি?</h2>
+              <p>যেমন: “ই-পাসপোর্টের জন্য কোথায় আবেদন করতে হয়?”</p>
+            </section>
+          `;
+        const messages = state.messages.map((message, index) => renderMessage(message, index)).join("");
+        const content = `
+          <main class="chat">
+            ${empty}
+            ${messages}
+          </main>
+          <section class="composer-wrap">
+            <div class="composer">
+              <input id="question" class="field" placeholder="আপনার প্রশ্ন লিখুন..." ${state.busy ? "disabled" : ""} />
+              ${button(state.busy ? "..." : "পাঠান", `id="send" class="send-button" ${state.busy ? "disabled" : ""}`)}
             </div>
-          ); })()}
-        </div>
-      );
-    }
+          </section>
+        `;
 
-    function Chat({ token }) {
-      const [msgs, setMsgs] = useState([]);
-      const [q, setQ] = useState(""); const [busy, setBusy] = useState(false);
-      const [conv, setConv] = useState(null);
+        renderShell(content);
 
-      async function send() {
-        if (!q.trim()) return;
-        const question = q; setQ(""); setMsgs((m)=>[...m,{role:"user",content:question}]); setBusy(true);
+        const question = root.querySelector("#question");
+        const send = root.querySelector("#send");
+        send.addEventListener("click", () => sendQuestion(question.value));
+        question.addEventListener("keydown", (event) => {
+          if (event.key === "Enter") sendQuestion(question.value);
+        });
+        question.focus();
+        root.querySelectorAll("[data-citation]").forEach((node) => {
+          node.addEventListener("click", () => {
+            const key = node.getAttribute("data-citation");
+            setState({ openCitation: state.openCitation === key ? null : key });
+          });
+        });
+      }
+
+      function renderMessage(message, index) {
+        const role = message.role === "user" ? "user" : "assistant";
+        const status = role === "assistant"
+          ? `<div class="${message.grounded === false ? "ungrounded" : "grounded"}">● ${
+              message.grounded === false ? "তথ্যসূত্রে উত্তর পাওয়া যায়নি" : "সূত্রভিত্তিক উত্তর"
+            }</div>`
+          : "";
+        const citations = role === "assistant" ? renderCitations(message, index) : "";
+        return `
+          <div class="message-row ${role}">
+            <article class="bubble ${role}">
+              ${escapeHtml(message.content)}
+              ${status}
+              ${citations}
+            </article>
+          </div>
+        `;
+      }
+
+      function renderCitations(message, index) {
+        const items = message.citations || [];
+        if (!items.length) return "";
+        const chips = items.map((citation) => {
+          const key = `${index}-${citation.marker}`;
+          return button(`সূত্র [${citation.marker}] · ${citation.source}`, `class="citation" data-citation="${key}"`);
+        }).join("");
+        const open = items.find((citation) => state.openCitation === `${index}-${citation.marker}`);
+        return `
+          <div class="citation-list">${chips}</div>
+          ${open ? `<div class="snippet">${escapeHtml(open.snippet)}...</div>` : ""}
+        `;
+      }
+
+      async function sendQuestion(value) {
+        const question = value.trim();
+        if (!question || state.busy) return;
+        setState({
+          busy: true,
+          messages: [...state.messages, { role: "user", content: question }],
+          openCitation: null,
+        });
         try {
-          const res = await api("/chat", { method:"POST", token, body:{ question, conversation_id: conv } });
-          setConv(res.conversation_id);
-          setMsgs((m)=>[...m,{role:"assistant",content:res.answer,citations:res.citations,grounded:res.grounded}]);
-        } catch (e) {
-          setMsgs((m)=>[...m,{role:"assistant",content:"ত্রুটি: "+e.message,grounded:false}]);
-        } finally { setBusy(false); }
+          const response = await api("/chat", {
+            method: "POST",
+            token: state.token,
+            body: { question, conversation_id: state.conversationId },
+          });
+          setState({
+            busy: false,
+            conversationId: response.conversation_id,
+            messages: [
+              ...state.messages,
+              {
+                role: "assistant",
+                content: response.answer,
+                citations: response.citations,
+                grounded: response.grounded,
+              },
+            ],
+          });
+        } catch (error) {
+          setState({
+            busy: false,
+            messages: [...state.messages, { role: "assistant", content: "ত্রুটি: " + error.message, grounded: false }],
+          });
+        }
       }
 
-      return (
-        <div className="max-w-2xl mx-auto px-4 pb-32 pt-6">
-          {msgs.length===0 && (
-            <div className="text-center mt-16" style={{color:"var(--muted)"}}>
-              <div className="serif text-xl mb-2" style={{color:"var(--primary-dark)"}}>কীভাবে সাহায্য করতে পারি?</div>
-              <p className="text-sm">যেমন: “ই-পাসপোর্টের জন্য কোথায় আবেদন করতে হয়?”</p>
-            </div>
-          )}
-          {msgs.map((m,i)=>(
-            <div key={i} className={"mb-4 flex "+(m.role==="user"?"justify-end":"justify-start")}>
-              <div className={"max-w-[85%] px-4 py-3 rounded-2xl fade "+(m.role==="user"?"text-white":"bg-[var(--surface)] border border-[var(--border)]")}
-                style={m.role==="user"?{background:"var(--primary)"}:{}}>
-                <div className="whitespace-pre-wrap leading-relaxed">{m.content}</div>
-                {m.role==="assistant" && (
-                  <>
-                    {m.grounded===false
-                      ? <div className="mt-1.5 text-xs" style={{color:"var(--amber)"}}>● তথ্যসূত্রে উত্তর পাওয়া যায়নি</div>
-                      : <div className="mt-1.5 text-xs" style={{color:"var(--primary)"}}>● সূত্রভিত্তিক উত্তর</div>}
-                    <Citations items={m.citations} />
-                  </>
-                )}
-              </div>
-            </div>
-          ))}
-          <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-[var(--paper)] via-[var(--paper)] to-transparent pt-6 pb-5">
-            <div className="max-w-2xl mx-auto px-4 flex gap-2">
-              <input value={q} onChange={(e)=>setQ(e.target.value)} onKeyDown={(e)=>e.key==="Enter"&&send()}
-                placeholder="আপনার প্রশ্ন লিখুন…" disabled={busy}
-                className="flex-1 px-4 py-3 rounded-xl border border-[var(--border)] bg-white outline-none focus:border-[var(--primary)]" />
-              <button onClick={send} disabled={busy}
-                className="px-5 rounded-xl text-white font-medium disabled:opacity-60" style={{background:"var(--primary)"}}>
-                {busy ? "…" : "পাঠান"}
-              </button>
-            </div>
-          </div>
-        </div>
-      );
-    }
+      function renderAdmin() {
+        const rows = state.docs.length
+          ? state.docs.map((doc) => `
+              <article class="doc-row">
+                <span>${escapeHtml(doc.title)}</span>
+                <span class="doc-meta">সংস্করণ ${escapeHtml(doc.version)} · ${escapeHtml(doc.n_chunks)} অংশ</span>
+              </article>
+            `).join("")
+          : `<p class="muted">এখনো কোনো ডকুমেন্ট যোগ করা হয়নি।</p>`;
+        const content = `
+          <main class="admin">
+            <h2 class="serif section-title">কর্পাস ব্যবস্থাপনা</h2>
+            <section class="admin-form">
+              <input id="doc-title" class="field" placeholder="ডকুমেন্ট শিরোনাম" />
+              <textarea id="doc-text" class="field" placeholder="বাংলা টেক্সট পেস্ট করুন..."></textarea>
+              ${button(state.busy ? "যুক্ত হচ্ছে..." : "ইনডেক্সে যুক্ত করুন", `id="add-doc" class="primary-button" ${state.busy ? "disabled" : ""}`)}
+            </section>
+            <section class="docs">${rows}</section>
+          </main>
+        `;
 
-    function Admin({ token }) {
-      const [docs, setDocs] = useState([]);
-      const [title, setTitle] = useState(""); const [text, setText] = useState("");
-      const [busy, setBusy] = useState(false);
+        renderShell(content);
 
-      const load = () => api("/admin/documents", { token }).then(setDocs).catch(()=>{});
-      useEffect(()=>{ load(); }, []);
-
-      async function add() {
-        setBusy(true);
-        try { await api("/admin/documents", { method:"POST", token, body:{ title, text, lang:"bn" } });
-          setTitle(""); setText(""); load(); } finally { setBusy(false); }
+        root.querySelector("#add-doc").addEventListener("click", () => {
+          const title = root.querySelector("#doc-title").value.trim();
+          const text = root.querySelector("#doc-text").value.trim();
+          addDoc(title, text);
+        });
       }
-      return (
-        <div className="max-w-2xl mx-auto px-4 py-6">
-          <h2 className="serif text-xl mb-4" style={{color:"var(--primary-dark)"}}>কর্পাস ব্যবস্থাপনা</h2>
-          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-4 mb-6">
-            <input className="w-full mb-2 px-3 py-2 rounded-lg border border-[var(--border)] outline-none focus:border-[var(--primary)]"
-              placeholder="ডকুমেন্ট শিরোনাম" value={title} onChange={(e)=>setTitle(e.target.value)} />
-            <textarea rows="5" className="w-full mb-2 px-3 py-2 rounded-lg border border-[var(--border)] outline-none focus:border-[var(--primary)]"
-              placeholder="বাংলা টেক্সট পেস্ট করুন…" value={text} onChange={(e)=>setText(e.target.value)} />
-            <button onClick={add} disabled={busy||!title||!text}
-              className="px-4 py-2 rounded-lg text-white font-medium disabled:opacity-60" style={{background:"var(--primary)"}}>
-              {busy?"যুক্ত হচ্ছে…":"ইনডেক্সে যুক্ত করুন"}
-            </button>
-          </div>
-          <div className="space-y-2">
-            {docs.map((d)=>(
-              <div key={d.id} className="flex justify-between items-center bg-white border border-[var(--border)] rounded-lg px-4 py-3">
-                <span>{d.title}</span>
-                <span className="text-xs" style={{color:"var(--muted)"}}>সংস্করণ {d.version} · {d.n_chunks} অংশ</span>
-              </div>
-            ))}
-            {docs.length===0 && <p className="text-sm" style={{color:"var(--muted)"}}>এখনো কোনো ডকুমেন্ট যোগ করা হয়নি।</p>}
-          </div>
-        </div>
-      );
-    }
 
-    function App() {
+      async function loadDocs() {
+        if (!state.token) return;
+        try {
+          const docs = await api("/admin/documents", { token: state.token });
+          setState({ docs });
+        } catch (_) {}
+      }
+
+      async function addDoc(title, text) {
+        if (!title || !text || state.busy) return;
+        setState({ busy: true });
+        try {
+          await api("/admin/documents", { method: "POST", token: state.token, body: { title, text, lang: "bn" } });
+          const docs = await api("/admin/documents", { token: state.token });
+          setState({ busy: false, docs });
+        } catch (error) {
+          alert(error.message);
+          setState({ busy: false });
+        }
+      }
+
+      function render() {
+        if (!state.token) {
+          renderAuth();
+          return;
+        }
+        if (state.view === "admin") {
+          renderAdmin();
+          return;
+        }
+        renderChat();
+      }
+
       const saved = safeJsonParse(safeStorageGet("brag"));
-      const [token, setToken] = useState(saved?.token || null);
-      const [user, setUser] = useState(saved?.user || null);
-      const [view, setView] = useState("chat");
-
-      function logout() { safeStorageRemove("brag"); setToken(null); setUser(null); }
-      if (!token) return <Auth onAuth={(t,u)=>{ setToken(t); setUser(u); }} />;
-
-      return (
-        <div className="min-h-screen">
-          <header className="border-b border-[var(--border)] bg-[var(--surface)]/80 backdrop-blur sticky top-0 z-10">
-            <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
-              <div className="serif font-bold" style={{color:"var(--primary-dark)"}}>সেবা সহায়ক</div>
-              <div className="flex items-center gap-3 text-sm">
-                {user?.is_admin && (
-                  <button onClick={()=>setView(view==="chat"?"admin":"chat")} style={{color:"var(--primary)"}}>
-                    {view==="chat" ? "কর্পাস" : "চ্যাট"}
-                  </button>
-                )}
-                <span style={{color:"var(--muted)"}}>{user?.email}</span>
-                <button onClick={logout} style={{color:"var(--muted)"}}>লগআউট</button>
-              </div>
-            </div>
-          </header>
-          {view==="chat" ? <Chat token={token} /> : <Admin token={token} />}
-        </div>
-      );
-    }
-
-    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+      if (saved && saved.token && saved.user) {
+        state = { ...state, token: saved.token, user: saved.user };
+      }
+      render();
+      if (state.view === "admin") loadDocs();
+    })();
   </script>
 </body>
 </html>
