@@ -3,21 +3,29 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
+import bcrypt
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 
 from app.config import get_settings
 
 settings = get_settings()
-_pwd = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+# bcrypt only considers the first 72 bytes of a password; longer inputs raise on
+# bcrypt >= 5. We truncate to match bcrypt's own limit (the same behaviour passlib
+# used by default) so registration/login never error on long or multibyte inputs.
+_BCRYPT_MAX_BYTES = 72
 
 
 def hash_password(password: str) -> str:
-    return _pwd.hash(password)
+    digest = bcrypt.hashpw(password.encode("utf-8")[:_BCRYPT_MAX_BYTES], bcrypt.gensalt())
+    return digest.decode("utf-8")
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return _pwd.verify(plain, hashed)
+    try:
+        return bcrypt.checkpw(plain.encode("utf-8")[:_BCRYPT_MAX_BYTES], hashed.encode("utf-8"))
+    except ValueError:
+        return False
 
 
 def create_access_token(subject: str) -> str:
