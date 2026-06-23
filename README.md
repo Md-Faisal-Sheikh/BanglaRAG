@@ -34,14 +34,15 @@ banglarag/
 ├── app/                    # FastAPI backend
 │   ├── api/                # routes: auth, chat, admin (+ deps)
 │   ├── core/               # RAG core — each piece behind an interface
-│   │   ├── embeddings.py   #   bge-m3 (local) | OpenAI
+│   │   ├── embeddings.py   #   bge-m3 (local) | OpenAI | hash (demo)
 │   │   ├── chunking.py     #   fixed | recursive | sentence_bn (Bangla-aware)
-│   │   ├── vectorstore.py  #   Chroma (local) | Qdrant (stub)
+│   │   ├── lexical.py      #   BM25 sparse index (Bangla-aware tokenizer)
+│   │   ├── vectorstore.py  #   Chroma (local) | memory (demo) | Qdrant (stub)
 │   │   ├── reranker.py     #   cross-encoder | cohere | none
 │   │   ├── llm.py          #   OpenAI | Gemini | Groq | Mock (offline)
 │   │   ├── translation.py  #   for the English-pivot arm
-│   │   └── rag_pipeline.py #   retrieve → rerank → grounded answer → citations
-│   ├── services/           # ingestion, auth
+│   │   └── rag_pipeline.py #   dense + BM25 → RRF → rerank → grounded answer → citations
+│   ├── services/           # ingestion, extraction (pdf/docx/txt), auth
 │   ├── db/                 # SQLAlchemy models + session
 │   ├── config.py           # all knobs (pydantic-settings)
 │   └── main.py
@@ -111,8 +112,14 @@ python ingest.py --corpus data/corpus --reset     # build the live index
 python run.py                                       # http://localhost:8000
 ```
 
-Open the URL. **The first account you register becomes the admin** (can manage the
-corpus from the "কর্পাস" tab). API docs live at `http://localhost:8000/docs`.
+Open the URL. **The first account you register becomes the admin.** From the "কর্পাস"
+tab the admin can paste text **or upload `.txt` / `.md` / `.pdf` / `.docx` files**, and
+delete documents (which also removes their chunks from the index). API docs live at
+`http://localhost:8000/docs`.
+
+Retrieval is **hybrid by default**: dense vectors and a BM25 lexical index are fused
+with Reciprocal Rank Fusion, then reranked. Set `RETRIEVAL_MODE=dense` to disable the
+lexical arm.
 
 ## Run the tests
 

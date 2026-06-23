@@ -333,6 +333,62 @@
       padding-inline: 16px;
     }
 
+    .form-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 18px 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .form-divider::before,
+    .form-divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .upload-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .file-input {
+      flex: 1;
+      min-width: 180px;
+      margin: 0;
+      padding: 9px 12px;
+    }
+
+    .file-hint {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .doc-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .delete-button {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: white;
+      color: var(--danger);
+      padding: 4px 10px;
+      font-size: 13px;
+    }
+
+    .delete-button:hover {
+      background: #fbeae8;
+    }
+
     .docs {
       display: grid;
       gap: 8px;
@@ -706,7 +762,10 @@
           ? state.docs.map((doc) => `
               <article class="doc-row">
                 <span>${escapeHtml(doc.title)}</span>
-                <span class="doc-meta">সংস্করণ ${escapeHtml(doc.version)} · ${escapeHtml(doc.n_chunks)} অংশ</span>
+                <span class="doc-actions">
+                  <span class="doc-meta">সংস্করণ ${escapeHtml(doc.version)} · ${escapeHtml(doc.n_chunks)} অংশ</span>
+                  ${button("মুছুন", `class="delete-button" data-del="${escapeHtml(doc.id)}" ${state.busy ? "disabled" : ""}`)}
+                </span>
               </article>
             `).join("")
           : `<p class="muted">এখনো কোনো ডকুমেন্ট যোগ করা হয়নি।</p>`;
@@ -714,9 +773,15 @@
           <main class="admin">
             <h2 class="serif section-title">কর্পাস ব্যবস্থাপনা</h2>
             <section class="admin-form">
-              <input id="doc-title" class="field" placeholder="ডকুমেন্ট শিরোনাম" />
+              <input id="doc-title" class="field" placeholder="ডকুমেন্ট শিরোনাম (ফাইলের জন্য ঐচ্ছিক)" />
               <textarea id="doc-text" class="field" placeholder="বাংলা টেক্সট পেস্ট করুন..."></textarea>
-              ${button(state.busy ? "যুক্ত হচ্ছে..." : "ইনডেক্সে যুক্ত করুন", `id="add-doc" class="primary-button" ${state.busy ? "disabled" : ""}`)}
+              ${button(state.busy ? "যুক্ত হচ্ছে..." : "টেক্সট ইনডেক্সে যুক্ত করুন", `id="add-doc" class="primary-button" ${state.busy ? "disabled" : ""}`)}
+              <div class="form-divider">অথবা ফাইল আপলোড করুন</div>
+              <div class="upload-row">
+                <input id="doc-file" class="field file-input" type="file" accept=".txt,.md,.pdf,.docx" ${state.busy ? "disabled" : ""} />
+                ${button(state.busy ? "আপলোড হচ্ছে..." : "আপলোড", `id="upload-doc" class="primary-button" ${state.busy ? "disabled" : ""}`)}
+              </div>
+              <p class="file-hint">সমর্থিত: .txt, .md, .pdf, .docx (সর্বোচ্চ ১০ MB)</p>
             </section>
             <section class="docs">${rows}</section>
           </main>
@@ -729,6 +794,14 @@
           const text = root.querySelector("#doc-text").value.trim();
           addDoc(title, text);
         });
+        root.querySelector("#upload-doc").addEventListener("click", () => {
+          const fileInput = root.querySelector("#doc-file");
+          const title = root.querySelector("#doc-title").value.trim();
+          uploadDoc(fileInput.files[0], title);
+        });
+        root.querySelectorAll("[data-del]").forEach((node) => {
+          node.addEventListener("click", () => deleteDoc(node.getAttribute("data-del")));
+        });
       }
 
       async function loadDocs() {
@@ -739,13 +812,56 @@
         } catch (_) {}
       }
 
+      async function refreshDocs() {
+        const docs = await api("/admin/documents", { token: state.token });
+        setState({ busy: false, docs });
+      }
+
       async function addDoc(title, text) {
         if (!title || !text || state.busy) return;
         setState({ busy: true });
         try {
           await api("/admin/documents", { method: "POST", token: state.token, body: { title, text, lang: "bn" } });
-          const docs = await api("/admin/documents", { token: state.token });
-          setState({ busy: false, docs });
+          await refreshDocs();
+        } catch (error) {
+          alert(error.message);
+          setState({ busy: false });
+        }
+      }
+
+      async function uploadDoc(file, title) {
+        if (!file || state.busy) return;
+        setState({ busy: true });
+        try {
+          const form = new FormData();
+          form.append("file", file);
+          form.append("lang", "bn");
+          if (title) form.append("title", title);
+          const response = await fetch(API + "/admin/documents/upload", {
+            method: "POST",
+            headers: { Authorization: "Bearer " + state.token },
+            body: form,
+          });
+          if (!response.ok) {
+            const data = await response.json().catch(() => ({}));
+            throw new Error(data.detail || response.statusText || "আপলোড ব্যর্থ হয়েছে");
+          }
+          await refreshDocs();
+        } catch (error) {
+          alert(error.message);
+          setState({ busy: false });
+        }
+      }
+
+      async function deleteDoc(id) {
+        if (!id || state.busy) return;
+        try {
+          if (!window.confirm("এই ডকুমেন্টটি মুছে ফেলবেন?")) return;
+        } catch (_) { /* sandboxed iframe: skip confirmation */ }
+        setState({ busy: true });
+        try {
+          await api("/admin/documents/" + id, { method: "DELETE", token: state.token });
+          await refreshDocs();
         } catch (error) {
           alert(error.message);
           setState({ busy: false });

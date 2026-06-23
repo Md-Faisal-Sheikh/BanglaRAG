@@ -31,6 +31,14 @@ class VectorStore(ABC):
     def query(self, query_embedding: list[float], k: int) -> list[RetrievedChunk]: ...
 
     @abstractmethod
+    def delete_by_doc(self, doc_id: str) -> None:
+        """Remove every chunk belonging to ``doc_id`` (all versions)."""
+
+    @abstractmethod
+    def all_documents(self) -> list[tuple[str, str, dict]]:
+        """Return every stored chunk as ``(id, text, metadata)`` (for lexical indexing)."""
+
+    @abstractmethod
     def reset(self) -> None: ...
 
     @abstractmethod
@@ -74,6 +82,13 @@ class ChromaVectorStore(VectorStore):
                 )
             )
         return out
+
+    def delete_by_doc(self, doc_id: str) -> None:
+        self.collection.delete(where={"doc_id": doc_id})
+
+    def all_documents(self) -> list[tuple[str, str, dict]]:
+        res = self.collection.get(include=["documents", "metadatas"])
+        return list(zip(res["ids"], res["documents"], res["metadatas"]))
 
     def reset(self) -> None:
         try:
@@ -123,6 +138,13 @@ class MemoryVectorStore(VectorStore):
             )
             for cid, emb, doc, meta in ranked
         ]
+
+    def delete_by_doc(self, doc_id: str) -> None:
+        self._rows = [row for row in self._rows if (row[3] or {}).get("doc_id") != doc_id]
+
+    def all_documents(self) -> list[tuple[str, str, dict]]:
+        # rows are (id, embedding, document, metadata)
+        return [(cid, doc, meta) for cid, _emb, doc, meta in self._rows]
 
     def reset(self) -> None:
         self._rows.clear()

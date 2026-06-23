@@ -47,6 +47,10 @@ def ingest_documents(
         if not chunks:
             continue
 
+        # Replace any previously indexed chunks for this document (all earlier
+        # versions) so re-ingesting can't leave orphaned chunks in the store.
+        store.delete_by_doc(doc.source)
+
         ids = [f"{doc.source}::v{version}::{i}" for i in range(len(chunks))]
         metadatas = [
             {"source": doc.title or doc.source, "doc_id": doc.source,

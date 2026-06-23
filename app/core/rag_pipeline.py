@@ -15,6 +15,7 @@ import re
 from dataclasses import dataclass, field
 
 from app.core.embeddings import EmbeddingProvider
+from app.core.lexical import LexicalIndex
 from app.core.llm import LLMProvider
 from app.core.reranker import Reranker
 from app.core.translation import translate
@@ -36,9 +37,11 @@ _CITATION_RE = re.compile(r"\[(\d+)\]")
 
 @dataclass
 class RAGConfig:
+    retrieval_mode: str = "hybrid"  # "hybrid" (BM25 + dense, RRF) | "dense"
     retrieval_lang: str = "bn"      # "bn" native | "en" pivot
     top_k: int = 20
     rerank_k: int = 5
+    rrf_k: int = 60                 # Reciprocal Rank Fusion constant
     use_reranker: bool = True
 
 
@@ -58,19 +61,44 @@ class RAGPipeline:
         reranker: Reranker,
         llm: LLMProvider,
         config: RAGConfig,
+        lexical: LexicalIndex | None = None,
     ):
         self.embedder = embedder
         self.store = store
         self.reranker = reranker
         self.llm = llm
         self.config = config
+        # Lexical (BM25) index for hybrid retrieval; None => dense-only.
+        self.lexical = lexical
+
+    def _fuse_rrf(self, ranked_lists: list[list[RetrievedChunk]]) -> list[RetrievedChunk]:
+        """Reciprocal Rank Fusion: combine ranked lists by 1/(k + rank), rank-only
+        so dense similarities and BM25 scores (different scales) merge cleanly."""
+        fused: dict[str, float] = {}
+        by_id: dict[str, RetrievedChunk] = {}
+        for ranked in ranked_lists:
+            for rank, chunk in enumerate(ranked):
+                fused[chunk.id] = fused.get(chunk.id, 0.0) + 1.0 / (self.config.rrf_k + rank + 1)
+                by_id.setdefault(chunk.id, chunk)
+        ordered = sorted(by_id.values(), key=lambda c: fused[c.id], reverse=True)
+        for chunk in ordered:
+            chunk.score = fused[chunk.id]
+        return ordered
 
     def retrieve(self, question: str) -> list[RetrievedChunk]:
         query = question
         if self.config.retrieval_lang == "en":
             query = translate(question, "en", self.llm)
+
         q_emb = self.embedder.embed_query(query)
-        candidates = self.store.query(q_emb, self.config.top_k)
+        dense = self.store.query(q_emb, self.config.top_k)
+
+        if self.config.retrieval_mode == "hybrid" and self.lexical is not None:
+            lexical = self.lexical.search(query, self.config.top_k)
+            candidates = self._fuse_rrf([dense, lexical])[: self.config.top_k]
+        else:
+            candidates = dense
+
         if self.config.use_reranker:
             candidates = self.reranker.rerank(question, candidates, self.config.rerank_k)
         else:

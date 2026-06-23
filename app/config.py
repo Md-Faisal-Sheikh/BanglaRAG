@@ -51,12 +51,17 @@ class Settings(BaseSettings):
     groq_api_key: str = ""
 
     # --- Retrieval defaults ---
+    retrieval_mode: str = "hybrid"                # "hybrid" (BM25 + dense, RRF) | "dense"
     retrieval_lang: str = "bn"                    # "bn" (native) | "en" (English-pivot)
     top_k: int = 20                               # candidates fetched from vector store
     rerank_k: int = 5                             # kept after reranking
+    rrf_k: int = 60                               # Reciprocal Rank Fusion constant
     chunker: str = "recursive"                    # "fixed" | "recursive" | "sentence_bn"
     chunk_size: int = 512
     chunk_overlap: int = 64
+
+    # --- Uploads ---
+    max_upload_mb: int = 10                       # reject uploaded files larger than this
 
 
 @lru_cache

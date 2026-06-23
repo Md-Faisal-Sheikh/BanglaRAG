@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.core.embeddings import get_embedding_provider
+from app.core.lexical import LexicalIndex
 from app.core.llm import get_llm
 from app.core.rag_pipeline import RAGConfig, RAGPipeline
 from app.core.reranker import get_reranker
@@ -41,15 +42,19 @@ def get_pipeline() -> RAGPipeline:
                     docs.append(RawDoc(source=stem, title=stem, text=f.read(), lang="bn"))
         ingest_documents(docs, embedder, store, s)
 
+    lexical = LexicalIndex(store) if s.retrieval_mode == "hybrid" else None
     return RAGPipeline(
         embedder=embedder,
         store=store,
         reranker=get_reranker(s),
         llm=get_llm(s),
+        lexical=lexical,
         config=RAGConfig(
+            retrieval_mode=s.retrieval_mode,
             retrieval_lang=s.retrieval_lang,
             top_k=s.top_k,
             rerank_k=s.rerank_k,
+            rrf_k=s.rrf_k,
             use_reranker=s.use_reranker,
         ),
     )
